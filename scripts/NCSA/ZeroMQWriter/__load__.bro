@@ -3,5 +3,4 @@
 # loaded automatically at that point.
 #
 
-# @load ./bar.bro
-
+@load ./logs-to-zeromq

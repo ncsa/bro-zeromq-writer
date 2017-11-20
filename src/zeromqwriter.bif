@@ -1,1 +1,6 @@
+# Options for the ZeroMQ writer.
 
+module LogZeroMQ;
+
+const zmq_hostname: string;
+const zmq_port: count;

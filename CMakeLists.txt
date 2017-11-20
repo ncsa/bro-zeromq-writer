@@ -5,10 +5,18 @@ project(BroPluginZeroMQWriter)
 
 include(BroPlugin)
 
+find_package(ZeroMQ)
+
+if (NOT ZEROMQ_FOUND)
+    message(FATAL_ERROR "ZeroMQ not found.")
+endif ()
+
 bro_plugin_begin(NCSA ZeroMQWriter)
 bro_plugin_cc(src/Plugin.cc)
+bro_plugin_cc(src/ZeroMQ.cc)
 bro_plugin_bif(src/zeromqwriter.bif)
 bro_plugin_dist_files(README CHANGES COPYING VERSION)
+bro_plugin_link_library(${ZEROMQ_LIBRARIES})
 bro_plugin_end()
 
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" VERSION LIMIT_COUNT 1)

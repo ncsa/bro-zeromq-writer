@@ -5,19 +5,18 @@
 
 plugin_usage()
 {
-    : # Do nothing
-#    cat <<EOF
-#    --with-foo=DIR          Path to foo
-# EOF
+    cat <<EOF
+    --with-zmq=DIR             Path to ZeroMQ installation
+EOF
 }
 
 plugin_option()
 {
     case "$1" in
-#        --with-foo=*)
-#            append_cache_entry FOO_DIR PATH $optarg
-#            return 0
-#            ;;
+        --with-zmq=*)
+            append_cache_entry ZEROMQ_ROOT_DIR PATH $optarg
+            return 0
+            ;;
 
         *)
             return 1;
