@@ -8,7 +8,7 @@ include(BroPlugin)
 find_package(ZeroMQ)
 
 if (NOT ZEROMQ_FOUND)
-    message(FATAL_ERROR "ZeroMQ not found.")
+    message(FATAL_ERROR "Cannot find ZeroMQ, use --with-zmq=DIR.")
 endif ()
 
 include_directories(BEFORE ${ZEROMQ_INCLUDE_DIR})
