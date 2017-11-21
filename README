@@ -1,5 +1,64 @@
+Bro ZeroMQ Log Writer Plugin
+============================
 
-NCSA::ZeroMQWriter
-=================================
+A Bro log writer that sends logging output using ZeroMQ.
 
-<Insert plugin documentation here.>
+This plugin uses the ZeroMQ "publish-subscribe" pattern, where Bro is
+the publisher and a user-provided program is the subscriber.
+
+Bro publishes each log record as a ZeroMQ multi-part message containing
+two parts:  the first part contains the Bro log path (e.g. "conn"), and the
+second part contains the log record in JSON format.  The first message part
+is needed so that the receiving process knows which type of log record is
+being received, and it can also be useful to allow filtering of incoming
+messages.
+
+
+Installation
+------------
+
+This plugin has been tested against the latest release of ZeroMQ, which at
+the time of this writing is v4.2.2.
+
+Before attempting to build this plugin, make sure you have installed
+ZeroMQ (http://zeromq.org/intro:get-the-software).
+
+Next, build and install this Bro plugin using the following commands
+(replace BRO_SRC_DIR with the top-level directory of the Bro source code)::
+
+    # ./configure --bro-dist=BRO_SRC_DIR
+    # make
+    # sudo make install
+
+Run the following command to ensure that the plugin was installed
+successfully::
+
+    # bro -N NCSA::ZeroMQWriter
+    NCSA::ZeroMQWriter - ZeroMQ log writer (dynamic, version 0.1)
+
+
+Logging to ZeroMQ
+-----------------
+
+In order to enable logging to ZeroMQ, add the following lines to local.bro
+(change the specified hostname and port number to suitable values for
+your setup)::
+
+    @load NCSA/ZeroMQWriter
+    redef LogZeroMQ::zmq_hostname = "localhost";
+    redef LogZeroMQ::zmq_port = 12345;
+    redef LogZeroMQ::send_logs += { HTTP::LOG, DNS::LOG, Files::LOG };
+
+After running "broctl deploy", Bro will write the logs you specified
+in "LogZeroMQ::send_logs" to the specified hostname and TCP port number
+using ZeroMQ.  The regular ASCII logs will also still be written as usual.
+
+Instead of specifying which logs to send, one could instead specify which
+logs to not send (all others will be sent).  To do this, just replace
+"send_logs" with "excluded_log_ids"::
+
+    @load NCSA/ZeroMQWriter
+    redef LogZeroMQ::zmq_hostname = "localhost";
+    redef LogZeroMQ::zmq_port = 12345;
+    redef LogZeroMQ::excluded_log_ids += { Conn::LOG, DNS::LOG };
+
