@@ -17,11 +17,9 @@ messages.
 Installation
 ------------
 
-This plugin has been tested against the latest release of ZeroMQ, which at
-the time of this writing is v4.2.2.
-
 Before attempting to build this plugin, make sure you have installed
-ZeroMQ (http://zeromq.org/intro:get-the-software).
+ZeroMQ (http://zeromq.org/intro:get-the-software).  This plugin should
+work with any recent release of ZeroMQ.
 
 Next, build and install this Bro plugin using the following commands
 (replace BRO_SRC_DIR with the top-level directory of the Bro source code)::

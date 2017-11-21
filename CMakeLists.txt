@@ -11,6 +11,7 @@ if (NOT ZEROMQ_FOUND)
     message(FATAL_ERROR "ZeroMQ not found.")
 endif ()
 
+include_directories(BEFORE ${ZEROMQ_INCLUDE_DIR})
 bro_plugin_begin(NCSA ZeroMQWriter)
 bro_plugin_cc(src/Plugin.cc)
 bro_plugin_cc(src/ZeroMQ.cc)

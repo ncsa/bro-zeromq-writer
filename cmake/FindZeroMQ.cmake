@@ -28,7 +28,7 @@ find_library(ZEROMQ_LIBRARIES
 )
 
 find_path(ZEROMQ_INCLUDE_DIR
-    NAMES include/zmq.h
+    NAMES zmq.h
     HINTS ${ZEROMQ_ROOT_DIR}/include
 )
 
