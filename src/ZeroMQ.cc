@@ -17,10 +17,15 @@ ZeroMQ::ZeroMQ(WriterFrontend* frontend): WriterBackend(frontend), formatter(0),
         (const char*) BifConst::LogZeroMQ::zmq_hostname->Bytes(),
         BifConst::LogZeroMQ::zmq_hostname->Len());
     zmq_port = BifConst::LogZeroMQ::zmq_port;
+
+    // Create zmq context (this is shared by all threads)
+    zmq_context = zmq_ctx_new();
 }
 
 ZeroMQ::~ZeroMQ()
-{}
+{
+    zmq_ctx_destroy(zmq_context);
+}
 
 bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Field* const* fields)
 {
@@ -31,7 +36,6 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
     formatter = new threading::formatter::JSON(this, threading::formatter::JSON::TS_EPOCH);
 
     // Create zmq socket
-    zmq_context = zmq_ctx_new();
     zmq_publisher = zmq_socket(zmq_context, ZMQ_PUB);
     if (!zmq_publisher) {
         Error(Fmt("Failed to create zmq socket for log path '%s': %s", log_path, strerror(errno)));
@@ -51,7 +55,6 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
 bool ZeroMQ::DoFinish(double network_time)
 {
     zmq_close(zmq_publisher);
-    zmq_ctx_destroy(zmq_context);
     delete formatter;
 
     return true;
