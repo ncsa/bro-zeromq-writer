@@ -9,9 +9,8 @@ the publisher and a user-provided program is the subscriber.
 Bro publishes each log record as a ZeroMQ multi-part message containing
 two parts:  the first part contains the Bro log path (e.g. "conn"), and the
 second part contains the log record in JSON format.  The first message part
-is needed so that the receiving process knows which type of log record is
-being received, and it can also be useful to allow filtering of incoming
-messages.
+is needed so that the subscriber knows which type of log record is
+being received, and to allow subscribing to logs based on the Bro log path.
 
 
 Installation
@@ -60,3 +59,22 @@ logs to not send (all others will be sent).  To do this, just replace
     redef LogZeroMQ::zmq_port = 12345;
     redef LogZeroMQ::excluded_log_ids += { Conn::LOG, DNS::LOG };
 
+
+Limitations
+-----------
+
+ZeroMQ will drop messages when there is no subscriber.  This means if you
+start Bro before starting a subscriber, then log records will be dropped (but
+will still be logged to disk) until Bro is able to connect to the subscriber.
+Therefore, in order to avoid losing log records, it is recommended to make
+sure the subscriber is running before attempting to start Bro.
+
+Once a connection to a subscriber is established, then if it is interrupted,
+ZeroMQ will not drop messages, but instead will buffer them (up to
+a limit) and they will all be sent when the connection is re-established.
+
+If "broctl stop" is issued while a connection to a subscriber is interrupted,
+and if ZeroMQ has buffered messages waiting to be sent, then "broctl stop"
+will take longer than usual.  If the connection cannot be re-established
+within a certain time (defined by the BroControl StopTimeout value),
+then BroControl will forcibly terminate Bro using SIGKILL.
