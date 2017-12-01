@@ -60,6 +60,52 @@ logs to not send (all others will be sent).  To do this, just replace
     redef LogZeroMQ::excluded_log_ids += { Conn::LOG, DNS::LOG };
 
 
+Logging to Multiple Subscribers
+-------------------------------
+
+If you want to send logs to more than one subscriber, then you will need to
+add log filters using the "add_filter" function, being careful to specify
+values for the hostname and port (both specified as strings) in the log
+filter "config" field.  In the following example, a new filter is added
+to the DNS and HTTP log streams:
+
+    @load NCSA/ZeroMQWriter
+    redef LogZeroMQ::zmq_hostname = "localhost";
+    redef LogZeroMQ::zmq_port = 12345;
+    redef LogZeroMQ::send_logs += { HTTP::LOG, DNS::LOG, Files::LOG };
+
+    event bro_init() &priority=-10
+        {
+        local remote_filter_dns: Log::Filter = [
+            $name = "remote-zmq",
+            $writer = Log::WRITER_ZEROMQ,
+            $interv = 0 sec,
+            $config = table(["hostname"] = "10.1.2.3", ["port"] = "54321")
+        ];
+
+        local remote_filter_http: Log::Filter = [
+            $name = "remote-zmq",
+            $writer = Log::WRITER_ZEROMQ,
+            $interv = 0 sec,
+            $config = table(["hostname"] = "10.1.2.3", ["port"] = "54321")
+        ];
+
+        Log::add_filter(DNS::LOG, remote_filter_dns);
+        Log::add_filter(HTTP::LOG, remote_filter_http);
+        }
+
+After running "broctl deploy", Bro will write the "HTTP", "DNS", and "Files"
+logs to a subscriber on the localhost, and the "HTTP" and "DNS" logs will
+also be written to a subscriber on another host.
+
+Keep in mind that when you add a log filter with the same log path as an
+existing filter (this is applicable to the DNS and HTTP log streams in
+this example), then Bro will append a string of the form "-N", where N is
+an integer, to the end of the log path so that each filter has its own
+unique log path (in the example above, the remote subscriber would see
+log paths of "dns-2" and "http-2").
+
+
 Limitations
 -----------
 

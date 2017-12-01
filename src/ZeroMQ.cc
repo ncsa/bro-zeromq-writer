@@ -3,6 +3,7 @@
 // Log writer for writing to ZeroMQ
 
 #include <cstring>
+#include <cstdlib>
 #include <zmq.h>
 
 #include "ZeroMQ.h"
@@ -27,8 +28,29 @@ ZeroMQ::~ZeroMQ()
     zmq_ctx_destroy(zmq_context);
 }
 
+string ZeroMQ::GetConfigValue(const WriterInfo& info, const string name) const
+{
+    map<const char*, const char*>::const_iterator it = info.config.find(name.c_str());
+    if (it == info.config.end())
+        return string();
+    else
+        return it->second;
+}
+
 bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Field* const* fields)
 {
+    string hostname = zmq_hostname;
+    string cfg_hostname = GetConfigValue(info, "hostname");
+
+    if (!cfg_hostname.empty())
+        hostname = cfg_hostname;
+
+    int port = zmq_port;
+    string cfg_port = GetConfigValue(info, "port");
+
+    if (!cfg_port.empty())
+        port = strtoul(cfg_port.c_str(), nullptr, 10);
+
     // The log path name (e.g. "conn") will be sent for each log message
     log_path = info.path;
 
@@ -43,7 +65,7 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
     }
 
     // Connect to the zmq subscriber
-    int rc = zmq_connect(zmq_publisher, Fmt("tcp://%s:%d", zmq_hostname.c_str(), zmq_port));
+    int rc = zmq_connect(zmq_publisher, Fmt("tcp://%s:%d", hostname.c_str(), port));
     if (rc) {
         Error(Fmt("Failed to connect zmq socket for log path '%s': %s", log_path, strerror(errno)));
         return false;

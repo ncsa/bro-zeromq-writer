@@ -33,6 +33,8 @@ protected:
     virtual bool DoHeartbeat(double network_time, double current_time);
 
 private:
+    string GetConfigValue(const WriterInfo& info, const string name) const;
+
     threading::formatter::JSON* formatter;
 
     void* zmq_context;
