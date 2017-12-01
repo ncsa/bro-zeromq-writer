@@ -64,6 +64,11 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
         return false;
     }
 
+    // Set the LINGER time to prevent "broctl stop" from hanging when there
+    // are unsent log messages and a connection to a subscriber is interrupted.
+    int millisecs = 0;
+    zmq_setsockopt(zmq_publisher, ZMQ_LINGER, &millisecs, sizeof(int));
+
     // Connect to the zmq subscriber
     int rc = zmq_connect(zmq_publisher, Fmt("tcp://%s:%d", hostname.c_str(), port));
     if (rc) {

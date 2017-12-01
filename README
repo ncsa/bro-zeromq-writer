@@ -106,21 +106,21 @@ unique log path (in the example above, the remote subscriber would see
 log paths of "dns-2" and "http-2").
 
 
-Limitations
------------
+How to Avoid Losing Log Messages
+--------------------------------
 
-ZeroMQ will drop messages when there is no subscriber.  This means if you
-start Bro before starting a subscriber, then log records will be dropped (but
-will still be logged to disk) until Bro is able to connect to the subscriber.
-Therefore, in order to avoid losing log records, it is recommended to make
-sure the subscriber is running before attempting to start Bro.
+ZeroMQ will drop messages before a connection to a subscriber has been
+successfully established.  This means if you start Bro before starting
+a subscriber, then log records will be dropped (but will still be logged
+to disk) until Bro is able to connect to the subscriber.  Therefore, in
+order to avoid losing log records, it is recommended to make
+sure your subscribers are running before attempting to start Bro.
 
 Once a connection to a subscriber is established, then if it is interrupted,
 ZeroMQ will not drop messages, but instead will buffer them (up to
 a limit) and they will all be sent when the connection is re-established.
 
-If "broctl stop" is issued while a connection to a subscriber is interrupted,
-and if ZeroMQ has buffered messages waiting to be sent, then "broctl stop"
-will take longer than usual.  If the connection cannot be re-established
-within a certain time (defined by the BroControl StopTimeout value),
-then BroControl will forcibly terminate Bro using SIGKILL.
+However, if Bro terminates before an interrupted connection is
+re-established, then all unsent log messages are discarded.  In order to
+avoid this situation, make sure your subscribers are running before
+issuing the BroControl "stop", "restart", or "deploy" commands.
