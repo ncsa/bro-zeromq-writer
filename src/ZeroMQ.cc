@@ -54,9 +54,6 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
     // The log path name (e.g. "conn") will be sent for each log message
     log_path = info.path;
 
-    // Initialize the formatter
-    formatter = new threading::formatter::JSON(this, threading::formatter::JSON::TS_EPOCH);
-
     // Create zmq socket
     zmq_publisher = zmq_socket(zmq_context, ZMQ_PUB);
     if (!zmq_publisher) {
@@ -67,14 +64,23 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
     // Set the LINGER time to prevent "broctl stop" from hanging when there
     // are unsent log messages and a connection to a subscriber is interrupted.
     int millisecs = 0;
-    zmq_setsockopt(zmq_publisher, ZMQ_LINGER, &millisecs, sizeof(int));
+    if (zmq_setsockopt(zmq_publisher, ZMQ_LINGER, &millisecs, sizeof(int))) {
+        // This is not a critical failure, so we don't return false here.
+        Warning(Fmt("Failed to set ZMQ_LINGER for log path '%s': %s", log_path, strerror(errno)));
+    }
 
     // Connect to the zmq subscriber
-    int rc = zmq_connect(zmq_publisher, Fmt("tcp://%s:%d", hostname.c_str(), port));
-    if (rc) {
+    if (zmq_connect(zmq_publisher, Fmt("tcp://%s:%d", hostname.c_str(), port))) {
         Error(Fmt("Failed to connect zmq socket for log path '%s': %s", log_path, strerror(errno)));
+
+        // We must close the socket here, because DoFinish will not be called.
+        zmq_close(zmq_publisher);
+
         return false;
     }
+
+    // Initialize the formatter
+    formatter = new threading::formatter::JSON(this, threading::formatter::JSON::TS_EPOCH);
 
     return true;
 }
