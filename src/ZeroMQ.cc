@@ -12,14 +12,16 @@
 using namespace logging;
 using namespace writer;
 
-ZeroMQ::ZeroMQ(WriterFrontend* frontend): WriterBackend(frontend), formatter(0), zmq_context(0), zmq_publisher(0)
+// Constructor is called once for each log filter that uses this log writer.
+ZeroMQ::ZeroMQ(WriterFrontend* frontend): WriterBackend(frontend), formatter(nullptr), zmq_context(nullptr), zmq_publisher(nullptr)
 {
+    // Get default host and port of subscriber from the Bro script constants.
     zmq_hostname.assign(
         (const char*) BifConst::LogZeroMQ::zmq_hostname->Bytes(),
         BifConst::LogZeroMQ::zmq_hostname->Len());
     zmq_port = BifConst::LogZeroMQ::zmq_port;
 
-    // Create zmq context (this is shared by all threads)
+    // Create zmq context
     zmq_context = zmq_ctx_new();
 }
 
@@ -28,6 +30,9 @@ ZeroMQ::~ZeroMQ()
     zmq_ctx_destroy(zmq_context);
 }
 
+// Do a table lookup in the "config" table (in Log::Filter) using the given
+// index name.  Result is always a string, where an empty string indicates
+// the given index does not exist.
 string ZeroMQ::GetConfigValue(const WriterInfo& info, const string name) const
 {
     map<const char*, const char*>::const_iterator it = info.config.find(name.c_str());
@@ -37,22 +42,29 @@ string ZeroMQ::GetConfigValue(const WriterInfo& info, const string name) const
         return it->second;
 }
 
+// DoInit is called once for each call to the constructor, but in a different
+// thread.
 bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Field* const* fields)
 {
+    // The Bro log path name.  This would normally be something like "conn",
+    // but if there are multiple log filters with same log path, then Bro
+    // renames the duplicates like "conn-2", "conn-3", etc.
+    log_path = info.path;
+
+    // Determine host and port of subscriber.  Values from the Bro script
+    // "config" table (in Log::Filter) override values from the Bro script
+    // constants "zmq_hostname" and "zmq_port".
     string hostname = zmq_hostname;
+    int port = zmq_port;
+
     string cfg_hostname = GetConfigValue(info, "hostname");
+    string cfg_port = GetConfigValue(info, "port");
 
     if (!cfg_hostname.empty())
         hostname = cfg_hostname;
 
-    int port = zmq_port;
-    string cfg_port = GetConfigValue(info, "port");
-
     if (!cfg_port.empty())
         port = strtoul(cfg_port.c_str(), nullptr, 10);
-
-    // The log path name (e.g. "conn") will be sent for each log message
-    log_path = info.path;
 
     // Create zmq socket
     zmq_publisher = zmq_socket(zmq_context, ZMQ_PUB);
@@ -85,6 +97,7 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
     return true;
 }
 
+// Free resources acquired in DoInit.
 bool ZeroMQ::DoFinish(double network_time)
 {
     zmq_close(zmq_publisher);
@@ -102,14 +115,19 @@ bool ZeroMQ::DoWrite(int num_fields, const threading::Field* const* fields, thre
 
     const char* msg = (const char*)buffer.Bytes();
 
+    // Send a ZeroMQ multi-part message, where 1st part is just the Bro log
+    // path, and 2nd part is the log record in JSON format.
     int nbytes = zmq_send(zmq_publisher, log_path, strlen(log_path), ZMQ_SNDMORE);
     if (nbytes == -1) {
-        Error(Fmt("Failed to send topic message '%s' to ZeroMQ: %s", log_path, strerror(errno)));
+        Warning(Fmt("Failed to send log path '%s' to ZeroMQ: %s", log_path, strerror(errno)));
+        // Return true here just in case the next message can be sent.
+        // Don't try to send 2nd part (to ensure all messages have 2 parts).
+        return true;
     }
 
     nbytes = zmq_send(zmq_publisher, msg, strlen(msg), 0);
     if (nbytes == -1) {
-        Error(Fmt("Failed to send '%s' log message to ZeroMQ: %s", log_path, strerror(errno)));
+        Warning(Fmt("Failed to send '%s' log to ZeroMQ: %s", log_path, strerror(errno)));
     }
 
     return true;
