@@ -21,14 +21,14 @@ ZeroMQ (http://zeromq.org/intro:get-the-software).  This plugin should
 work with any recent release of ZeroMQ.
 
 Next, build and install this Bro plugin using the following commands
-(replace BRO_SRC_DIR with the top-level directory of the Bro source code)::
+(replace BRO_SRC_DIR with the top-level directory of the Bro source code):
 
     # ./configure --bro-dist=BRO_SRC_DIR
     # make
     # sudo make install
 
 Run the following command to ensure that the plugin was installed
-successfully::
+successfully:
 
     # bro -N NCSA::ZeroMQWriter
     NCSA::ZeroMQWriter - ZeroMQ log writer (dynamic, version 0.1)
@@ -39,7 +39,7 @@ Logging to ZeroMQ
 
 In order to enable logging to ZeroMQ, add the following lines to local.bro
 (change the specified hostname and port number to suitable values for
-your setup)::
+your setup):
 
     @load NCSA/ZeroMQWriter
     redef LogZeroMQ::zmq_hostname = "localhost";
@@ -52,7 +52,7 @@ using ZeroMQ.  The regular ASCII logs will also still be written as usual.
 
 Instead of specifying which logs to send, one could instead specify which
 logs to not send (all others will be sent).  To do this, just replace
-"send_logs" with "excluded_log_ids"::
+"send_logs" with "excluded_log_ids":
 
     @load NCSA/ZeroMQWriter
     redef LogZeroMQ::zmq_hostname = "localhost";
@@ -117,10 +117,15 @@ order to avoid losing log records, it is recommended to make
 sure your subscribers are running before attempting to start Bro.
 
 Once a connection to a subscriber is established, then if it is interrupted,
-ZeroMQ will not drop messages, but instead will buffer them (up to
-a limit) and they will all be sent when the connection is re-established.
+ZeroMQ will queue unsent messages in memory and they will all be sent when the
+connection is re-established.  The maximum number of messages that will be
+queued in memory in such circumstances is called the high water mark (once
+the limit is reached, messages are dropped).  The default value is 1000 but
+can be changed like this:
+
+    redef LogZeroMQ::zmq_hwm = 25000;
 
 However, if Bro terminates before an interrupted connection is
-re-established, then all unsent log messages are discarded.  In order to
-avoid this situation, make sure your subscribers are running before
-issuing the BroControl "stop", "restart", or "deploy" commands.
+re-established, then all unsent log records are discarded.  In order to
+avoid this, make sure your subscribers are running before issuing
+the BroControl "stop", "restart", or "deploy" commands.

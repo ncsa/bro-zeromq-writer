@@ -2,4 +2,5 @@ NCSA::ZeroMQWriter - ZeroMQ log writer (dynamic, version 0.1)
     [Writer] ZeroMQ (Log::WRITER_ZEROMQ)
     [Constant] LogZeroMQ::zmq_hostname
     [Constant] LogZeroMQ::zmq_port
+    [Constant] LogZeroMQ::zmq_hwm
 

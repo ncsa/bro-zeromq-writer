@@ -43,6 +43,7 @@ private:
 
     string zmq_hostname;
     int zmq_port;
+    int zmq_hwm;
 };
 
 }}

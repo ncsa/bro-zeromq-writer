@@ -21,6 +21,9 @@ ZeroMQ::ZeroMQ(WriterFrontend* frontend): WriterBackend(frontend), formatter(nul
         BifConst::LogZeroMQ::zmq_hostname->Len());
     zmq_port = BifConst::LogZeroMQ::zmq_port;
 
+    // Get user-specified value for ZeroMQ high water mark.
+    zmq_hwm = BifConst::LogZeroMQ::zmq_hwm;
+
     // Create zmq context
     zmq_context = zmq_ctx_new();
 }
@@ -79,6 +82,12 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
     if (zmq_setsockopt(zmq_publisher, ZMQ_LINGER, &millisecs, sizeof(int))) {
         // This is not a critical failure, so we don't return false here.
         Warning(Fmt("Failed to set ZMQ_LINGER for log path '%s': %s", log_path, strerror(errno)));
+    }
+
+    // Set the ZeroMQ high water mark.
+    if (zmq_setsockopt(zmq_publisher, ZMQ_SNDHWM, &zmq_hwm, sizeof(int))) {
+        // This is not a critical failure, so we don't return false here.
+        Warning(Fmt("Failed to set ZMQ_SNDHWM for log path '%s': %s", log_path, strerror(errno)));
     }
 
     // Connect to the zmq subscriber

@@ -8,4 +8,9 @@ export {
 
 	## ZeroMQ port number.  Bro will connect to this TCP port number.
 	const zmq_port = 0 &redef;
+
+	## ZeroMQ high water mark.  Maximum number of log messages per
+	## log filter that will be queued in memory if the connection to a
+	## subscriber is interrupted.
+	const zmq_hwm = 1000 &redef;
 }
