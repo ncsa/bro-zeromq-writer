@@ -128,4 +128,11 @@ can be changed like this:
 However, if Bro terminates before an interrupted connection is
 re-established, then all unsent log records are discarded.  In order to
 avoid this, make sure your subscribers are running before issuing
-the BroControl "stop", "restart", or "deploy" commands.
+the BroControl "stop", "restart", or "deploy" commands.  You can control
+the amount of time before unsent logs are discarded by specifying the
+linger time (specified in milliseconds):
+
+    redef LogZeroMQ::zmq_linger = 3000;
+
+Note that increasing the value of this option will increase the time
+that "broctl stop" takes to finish running.

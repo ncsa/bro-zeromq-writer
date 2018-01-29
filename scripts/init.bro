@@ -13,4 +13,9 @@ export {
 	## log filter that will be queued in memory if the connection to a
 	## subscriber is interrupted.
 	const zmq_hwm = 1000 &redef;
+
+	## The number of milliseconds to wait for unsent messages to be sent
+	## before discarding them.  This is applicable only when Bro attempts to
+	## disconnect a socket, which happens only when Bro is terminating.
+	const zmq_linger: int = 3000 &redef;
 }

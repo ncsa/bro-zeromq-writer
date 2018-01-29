@@ -13,6 +13,6 @@ plugin::Configuration Plugin::Configure()
 	config.name = "NCSA::ZeroMQWriter";
 	config.description = "ZeroMQ log writer";
 	config.version.major = 0;
-	config.version.minor = 1;
+	config.version.minor = 2;
 	return config;
 	}

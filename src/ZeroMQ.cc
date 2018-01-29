@@ -24,6 +24,9 @@ ZeroMQ::ZeroMQ(WriterFrontend* frontend): WriterBackend(frontend), formatter(nul
     // Get user-specified value for ZeroMQ high water mark.
     zmq_hwm = BifConst::LogZeroMQ::zmq_hwm;
 
+    // Get user-specified value for ZeroMQ linger time.
+    zmq_linger = BifConst::LogZeroMQ::zmq_linger;
+
     // Create zmq context
     zmq_context = zmq_ctx_new();
 }
@@ -76,10 +79,8 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
         return false;
     }
 
-    // Set the LINGER time to prevent "broctl stop" from hanging when there
-    // are unsent log messages and a connection to a subscriber is interrupted.
-    int millisecs = 0;
-    if (zmq_setsockopt(zmq_publisher, ZMQ_LINGER, &millisecs, sizeof(int))) {
+    // Set the LINGER time.
+    if (zmq_setsockopt(zmq_publisher, ZMQ_LINGER, &zmq_linger, sizeof(int))) {
         // This is not a critical failure, so we don't return false here.
         Warning(Fmt("Failed to set ZMQ_LINGER for log path '%s': %s", log_path, strerror(errno)));
     }
