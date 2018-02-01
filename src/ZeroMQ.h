@@ -41,8 +41,7 @@ private:
     void* zmq_publisher;
     const char* log_path;
 
-    string zmq_hostname;
-    int zmq_port;
+    string endpoint;
     int zmq_hwm;
     int zmq_linger;
 };

@@ -13,14 +13,24 @@ is needed so that the subscriber knows which type of log record is
 being received, and to allow subscribing to logs based on the Bro log path.
 
 
-Installation
-------------
+Prerequisites
+-------------
 
-Before attempting to build this plugin, make sure you have installed
-ZeroMQ (http://zeromq.org/intro:get-the-software).  This plugin should
-work with any recent release of ZeroMQ.
+This Bro plugin should be compatible with any recent release of ZeroMQ
+and Bro.
 
-Next, build and install this Bro plugin using the following commands
+Before attempting to install this plugin, make sure you have installed
+ZeroMQ (http://zeromq.org/intro:get-the-software) and Bro.
+
+
+Building the Plugin
+-------------------
+
+In order to build this plugin from source, you will first need to obtain
+the Bro source (the source and installed versions of Bro must be the same)
+and build Bro.
+
+Next, build and install this plugin using the following commands
 (replace BRO_SRC_DIR with the top-level directory of the Bro source code):
 
     # ./configure --bro-dist=BRO_SRC_DIR
@@ -31,33 +41,57 @@ Run the following command to ensure that the plugin was installed
 successfully:
 
     # bro -N NCSA::ZeroMQWriter
-    NCSA::ZeroMQWriter - ZeroMQ log writer (dynamic, version 0.1)
+    NCSA::ZeroMQWriter - ZeroMQ log writer (dynamic, version 0.2)
 
 
 Logging to ZeroMQ
 -----------------
 
-In order to enable logging to ZeroMQ, add the following lines to local.bro
-(change the specified hostname and port number to suitable values for
-your setup):
+In order to enable logging to ZeroMQ, you need to load the plugin helper
+script and specify a subscriber endpoint where logs will be sent.
+
+Here is an example that you can add to local.bro (be sure to change the
+example hostname and TCP port number to the correct values for your subscriber
+endpoint):
 
     @load NCSA/ZeroMQWriter
-    redef LogZeroMQ::zmq_hostname = "localhost";
-    redef LogZeroMQ::zmq_port = 12345;
-    redef LogZeroMQ::send_logs += { HTTP::LOG, DNS::LOG, Files::LOG };
+    redef LogZeroMQ::endpoint = "tcp://localhost:12345";
 
-After running "broctl deploy", Bro will write the logs you specified
-in "LogZeroMQ::send_logs" to the specified hostname and TCP port number
-using ZeroMQ.  The regular ASCII logs will also still be written as usual.
+After running "broctl deploy", Bro will write all logs to the specified
+endpoint using ZeroMQ.  Note that all logs will also be written to disk,
+unless you've specifically configured Bro otherwise.
 
-Instead of specifying which logs to send, one could instead specify which
-logs to not send (all others will be sent).  To do this, just replace
+If you don't want to send all logs, then you can specify which ones to send.
+For example:
+
+    @load NCSA/ZeroMQWriter
+    redef LogZeroMQ::endpoint = "tcp://localhost:12345";
+    redef LogZeroMQ::send_logs += { HTTP::LOG, Files::LOG };
+
+After running "broctl deploy", Bro will write the "HTTP" and "Files"
+logs to the specified endpoint using ZeroMQ.
+
+Instead of specifying which logs to send via ZeroMQ, one could instead specify
+which logs to not send (all others will be sent).  To do this, just replace
 "send_logs" with "excluded_log_ids":
 
     @load NCSA/ZeroMQWriter
-    redef LogZeroMQ::zmq_hostname = "localhost";
-    redef LogZeroMQ::zmq_port = 12345;
+    redef LogZeroMQ::endpoint = "tcp://localhost:12345";
     redef LogZeroMQ::excluded_log_ids += { Conn::LOG, DNS::LOG };
+
+
+ZeroMQ Endpoints
+----------------
+
+A ZeroMQ endpoint always has the form "transport://address", where "transport"
+is a transport protocol that ZeroMQ recognizes (such as "tcp" or "ipc"),
+and "address" is a transport-specific address.  For the "tcp" transport
+protocol, an address consists of a hostname or IP address followed by a colon,
+and then a TCP port number.  For the "ipc" transport, an address is the
+pathname to a UNIX domain socket.
+
+Here are some examples of valid endpoints:  "tcp://localhost:1234",
+"tcp://10.1.2.3:4444", "ipc:///var/tmp/mysocket".
 
 
 Logging to Multiple Subscribers
@@ -65,13 +99,12 @@ Logging to Multiple Subscribers
 
 If you want to send logs to more than one subscriber, then you will need to
 add log filters using the "add_filter" function, being careful to specify
-values for the hostname and port (both specified as strings) in the log
-filter "config" field.  In the following example, a new filter is added
-to the DNS and HTTP log streams:
+a value for the subscriber endpoint in the "config" field of each log filter.
+In the following example, a new filter is added to the DNS and HTTP log
+streams:
 
     @load NCSA/ZeroMQWriter
-    redef LogZeroMQ::zmq_hostname = "localhost";
-    redef LogZeroMQ::zmq_port = 12345;
+    redef LogZeroMQ::endpoint = "tcp://localhost:12345";
     redef LogZeroMQ::send_logs += { HTTP::LOG, DNS::LOG, Files::LOG };
 
     event bro_init() &priority=-10
@@ -80,14 +113,14 @@ to the DNS and HTTP log streams:
             $name = "remote-zmq",
             $writer = Log::WRITER_ZEROMQ,
             $interv = 0 sec,
-            $config = table(["hostname"] = "10.1.2.3", ["port"] = "54321")
+            $config = table(["endpoint"] = "tcp://10.1.2.3:44000")
         ];
 
         local remote_filter_http: Log::Filter = [
             $name = "remote-zmq",
             $writer = Log::WRITER_ZEROMQ,
             $interv = 0 sec,
-            $config = table(["hostname"] = "10.1.2.3", ["port"] = "54321")
+            $config = table(["endpoint"] = "tcp://10.1.2.3:44000")
         ];
 
         Log::add_filter(DNS::LOG, remote_filter_dns);
@@ -111,9 +144,9 @@ How to Avoid Losing Log Messages
 
 ZeroMQ will drop messages before a connection to a subscriber has been
 successfully established.  This means if you start Bro before starting
-a subscriber, then log records will be dropped (but will still be logged
-to disk) until Bro is able to connect to the subscriber.  Therefore, in
-order to avoid losing log records, it is recommended to make
+a subscriber, then log records intended to be written via ZeroMQ will be
+dropped until Bro is able to connect to the subscriber.  Therefore, in
+order to avoid losing log records, it is important to make
 sure your subscribers are running before attempting to start Bro.
 
 Once a connection to a subscriber is established, then if it is interrupted,
@@ -128,11 +161,12 @@ can be changed like this:
 However, if Bro terminates before an interrupted connection is
 re-established, then all unsent log records are discarded.  In order to
 avoid this, make sure your subscribers are running before issuing
-the BroControl "stop", "restart", or "deploy" commands.  You can control
-the amount of time before unsent logs are discarded by specifying the
-linger time (specified in milliseconds):
+the BroControl "stop", "restart", or "deploy" commands.  You can specify
+the maximum amount of time that Bro will wait before terminating until all
+unsent logs are sent by specifying the linger time (specified in milliseconds):
 
     redef LogZeroMQ::zmq_linger = 3000;
 
-Note that increasing the value of this option will increase the time
-that "broctl stop" takes to finish running.
+In this example, if there are any unsent logs when Bro decides to
+terminate, then Bro will wait up to 3 seconds before giving up and discarding
+all remaining unsent logs.

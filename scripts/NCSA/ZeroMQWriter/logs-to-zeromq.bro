@@ -16,7 +16,7 @@ export {
 
 event bro_init() &priority=-5
     {
-    if ( zmq_hostname == "" || zmq_port == 0 )
+    if ( endpoint == "" )
         return;
 
     for ( stream_id in Log::active_streams )

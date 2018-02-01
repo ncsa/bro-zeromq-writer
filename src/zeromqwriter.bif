@@ -2,7 +2,6 @@
 
 module LogZeroMQ;
 
-const zmq_hostname: string;
-const zmq_port: count;
+const endpoint: string;
 const zmq_hwm: count;
 const zmq_linger: int;

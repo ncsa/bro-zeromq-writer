@@ -15,11 +15,10 @@ using namespace writer;
 // Constructor is called once for each log filter that uses this log writer.
 ZeroMQ::ZeroMQ(WriterFrontend* frontend): WriterBackend(frontend), formatter(nullptr), zmq_context(nullptr), zmq_publisher(nullptr)
 {
-    // Get default host and port of subscriber from the Bro script constants.
-    zmq_hostname.assign(
-        (const char*) BifConst::LogZeroMQ::zmq_hostname->Bytes(),
-        BifConst::LogZeroMQ::zmq_hostname->Len());
-    zmq_port = BifConst::LogZeroMQ::zmq_port;
+    // Get default endpoint of subscriber.
+    endpoint.assign(
+        (const char*) BifConst::LogZeroMQ::endpoint->Bytes(),
+        BifConst::LogZeroMQ::endpoint->Len());
 
     // Get user-specified value for ZeroMQ high water mark.
     zmq_hwm = BifConst::LogZeroMQ::zmq_hwm;
@@ -57,20 +56,14 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
     // renames the duplicates like "conn-2", "conn-3", etc.
     log_path = info.path;
 
-    // Determine host and port of subscriber.  Values from the Bro script
-    // "config" table (in Log::Filter) override values from the Bro script
-    // constants "zmq_hostname" and "zmq_port".
-    string hostname = zmq_hostname;
-    int port = zmq_port;
+    // Determine endpoint of subscriber.  Values from the Bro
+    // script "config" table (in Log::Filter) override value of the Bro script
+    // constant "endpoint".
+    string use_endpoint = endpoint;
+    string cfg_endpoint = GetConfigValue(info, "endpoint");
 
-    string cfg_hostname = GetConfigValue(info, "hostname");
-    string cfg_port = GetConfigValue(info, "port");
-
-    if (!cfg_hostname.empty())
-        hostname = cfg_hostname;
-
-    if (!cfg_port.empty())
-        port = strtoul(cfg_port.c_str(), nullptr, 10);
+    if (!cfg_endpoint.empty())
+        use_endpoint = cfg_endpoint;
 
     // Create zmq socket
     zmq_publisher = zmq_socket(zmq_context, ZMQ_PUB);
@@ -92,7 +85,7 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
     }
 
     // Connect to the zmq subscriber
-    if (zmq_connect(zmq_publisher, Fmt("tcp://%s:%d", hostname.c_str(), port))) {
+    if (zmq_connect(zmq_publisher, Fmt("%s", use_endpoint.c_str()))) {
         Error(Fmt("Failed to connect zmq socket for log path '%s': %s", log_path, strerror(errno)));
 
         // We must close the socket here, because DoFinish will not be called.
