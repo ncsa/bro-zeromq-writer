@@ -1,4 +1,4 @@
-NCSA::ZeroMQWriter - ZeroMQ log writer (dynamic, version 0.2)
+NCSA::ZeroMQWriter - ZeroMQ log writer (dynamic, version)
     [Writer] ZeroMQ (Log::WRITER_ZEROMQ)
     [Constant] LogZeroMQ::endpoint
     [Constant] LogZeroMQ::zmq_hwm
