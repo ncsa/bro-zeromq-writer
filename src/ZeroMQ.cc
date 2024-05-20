@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <zmq.h>
 #include <Desc.h>
-
+#include <unistd.h>
 #include "ZeroMQ.h"
 #include "zeromqwriter.bif.h"
 
@@ -97,6 +97,8 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
 
     // Initialize the formatter
     formatter = new threading::formatter::JSON(this, threading::formatter::JSON::TS_EPOCH);
+
+    sleep(1);
 
     return true;
 }
