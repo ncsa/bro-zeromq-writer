@@ -5,11 +5,12 @@
 #include <cstring>
 #include <cstdlib>
 #include <zmq.h>
+#include <Desc.h>
 
 #include "ZeroMQ.h"
 #include "zeromqwriter.bif.h"
 
-using namespace logging;
+using namespace zeek::logging;
 using namespace writer;
 
 // Constructor is called once for each log filter that uses this log writer.

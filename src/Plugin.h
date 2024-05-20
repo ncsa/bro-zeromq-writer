@@ -1,22 +1,18 @@
+#pragma once
 
-#ifndef BRO_PLUGIN_NCSA_ZEROMQWRITER
-#define BRO_PLUGIN_NCSA_ZEROMQWRITER
+#include <zeek/plugin/Plugin.h>
 
-#include <plugin/Plugin.h>
-
-namespace plugin {
+namespace zeek::plugin {
 namespace NCSA_ZeroMQWriter {
 
-class Plugin : public ::plugin::Plugin
+class Plugin : public zeek::plugin::Plugin
 {
 protected:
 	// Overridden from plugin::Plugin.
-	plugin::Configuration Configure() override;
+	zeek::plugin::Configuration Configure() override;
 };
 
 extern Plugin plugin;
 
 }
 }
-
-#endif

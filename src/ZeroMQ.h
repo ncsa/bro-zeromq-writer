@@ -10,7 +10,9 @@
 #include "logging/WriterBackend.h"
 #include "threading/formatters/JSON.h"
 
-namespace logging { namespace writer {
+using namespace std;
+
+namespace zeek::logging { namespace writer {
 
 class ZeroMQ : public WriterBackend {
 
