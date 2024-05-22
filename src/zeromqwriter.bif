@@ -5,3 +5,4 @@ module LogZeroMQ;
 const endpoint: string;
 const zmq_hwm: count;
 const zmq_linger: int;
+const zmq_connect_pause: int;

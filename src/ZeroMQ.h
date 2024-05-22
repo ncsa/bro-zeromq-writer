@@ -7,8 +7,8 @@
 
 #include <string>
 
-#include "logging/WriterBackend.h"
-#include "threading/formatters/JSON.h"
+#include "zeek/logging/WriterBackend.h"
+#include "zeek/threading/formatters/JSON.h"
 
 using namespace std;
 
@@ -46,6 +46,7 @@ private:
     string endpoint;
     int zmq_hwm;
     int zmq_linger;
+    int zmq_connect_pause;
 };
 
 }}

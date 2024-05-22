@@ -26,4 +26,13 @@ export {
 	## terminating).  A value of -1 means Bro will not terminate until all
 	## unsent messages have been sent.
 	const zmq_linger: int = 3000 &redef;
+
+	## Amount of milliseconds to pause after connecting to zmq endpoint
+	## If a zmq writer immediately starts sending messages after a connect
+	## to an endpoint, messages could be lost if the connection has not been
+	## setup yet. ZMQ calls this 'slow joiners'.
+	## If you want to make sure the zmq socket is fully initialized, ZMQ
+	## recommend waiting a bit using a sleep. Default is set to 0.
+
+	const zmq_connect_pause: int = 0 &redef;
 }

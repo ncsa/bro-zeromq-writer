@@ -5,7 +5,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <zmq.h>
-#include <Desc.h>
+#include <zeek/Desc.h>
 #include <unistd.h>
 #include "ZeroMQ.h"
 #include "zeromqwriter.bif.h"
@@ -26,6 +26,9 @@ ZeroMQ::ZeroMQ(WriterFrontend* frontend): WriterBackend(frontend), formatter(nul
 
     // Get user-specified value for ZeroMQ linger time.
     zmq_linger = BifConst::LogZeroMQ::zmq_linger;
+
+    // Get user-specified value for ZeroMQ connect pause
+    zmq_connect_pause = BifConst::LogZeroMQ::zmq_connect_pause;
 
     // Create zmq context
     zmq_context = zmq_ctx_new();
@@ -98,8 +101,7 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
     // Initialize the formatter
     formatter = new threading::formatter::JSON(this, threading::formatter::JSON::TS_EPOCH);
 
-    sleep(1);
-
+    usleep(zmq_connect_pause * 1000);
     return true;
 }
 
