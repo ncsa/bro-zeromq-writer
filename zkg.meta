@@ -1,7 +1,7 @@
 [package]
 description = ZeroMQ log writer.
 tags = zeek plugin, log writer, zeromq, zmq, 0mq, json
-build_command = ./configure --with-zmq=%(ZEROMQ_PREFIX)s && make
+build_command = ./configure --zeek-dist=%(zeek_dist)s --with-zmq=%(ZEROMQ_PREFIX)s && make
 user_vars =
   ZEROMQ_PREFIX [/usr/local] "ZeroMQ install prefix"
 script_dir = scripts/NCSA/ZeroMQWriter
