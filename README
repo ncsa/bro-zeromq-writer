@@ -1,40 +1,37 @@
-Bro ZeroMQ Log Writer Plugin
+Zeek ZeroMQ Log Writer Plugin
 ============================
 
-A Bro log writer that sends logging output using ZeroMQ.
+A Zeek log writer that sends logging output using ZeroMQ.
 
-This plugin uses the ZeroMQ "publish-subscribe" pattern, where Bro is
+This plugin uses the ZeroMQ "publish-subscribe" pattern, where Zeek is
 the publisher and a user-provided program is the subscriber.
 
-Bro publishes each log record as a ZeroMQ multi-part message containing
-two parts:  the first part contains the Bro log path (e.g. "conn"), and the
+Zeek publishes each log record as a ZeroMQ multi-part message containing
+two parts:  the first part contains the Zeek log path (e.g. "conn"), and the
 second part contains the log record in JSON format.  The first message part
 is needed so that the subscriber knows which type of log record is
-being received, and to allow subscribing to logs based on the Bro log path.
+being received, and to allow subscribing to logs based on the Zeek log path.
 
 
 Prerequisites
 -------------
 
-This Bro plugin should be compatible with any recent release of ZeroMQ
-and Bro.
+This Zeek plugin should be compatible with any recent release of ZeroMQ
+and Zeek.
 
 Before attempting to install this plugin, make sure you have installed
-ZeroMQ (http://zeromq.org) and Bro.  You will also need to obtain
-the Bro source and build Bro (the source and installed versions of Bro must be
-the same).
+ZeroMQ (https://zeromq.org) and Zeek.
 
 
 Installing
 ----------
 
-This plugin can be installed as a Bro package using the Bro Package Manager
-(see http://bro-package-manager.readthedocs.io).
+This plugin can be installed as a Zeek package using the Zeek Package Manager
+(see https://docs.zeek.org/projects/package-manager/en/stable/).
 
-Alternatively, to build this plugin from source, use the following commands
-(replace BRO_SRC_DIR with the top-level directory of the Bro source code):
+Alternatively, to build this plugin from source, use the following commands:
 
-    # ./configure --bro-dist=BRO_SRC_DIR
+    # ./configure
     # make
     # sudo make install
 
@@ -42,7 +39,7 @@ If the configure script fails to find ZeroMQ, then use the "--with-zmq"
 option to specify the prefix directory of the ZeroMQ installation.
 
 In order to verify that the plugin was installed correctly, run the
-command "bro -N" and look for the ZeroMQ log writer in the output.
+command "Zeek -N" and look for the ZeroMQ log writer in the output.
 
 
 Configuration
@@ -52,8 +49,8 @@ In order to enable logging to ZeroMQ, you must ensure that the plugin helper
 script gets loaded and you must specify a subscriber endpoint where logs will
 be sent.
 
-Here is an example that you can add to your local.bro (note that if you
-installed this plugin with the Bro package manager and if you're
+Here is an example that you can add to your local.Zeek (note that if you
+installed this plugin with the Zeek package manager and if you're
 using "@load packages" then you must omit the "@load" directive in all
 examples below).  Be sure to change the example hostname and TCP port number
 to the correct values for your subscriber endpoint:
@@ -61,9 +58,9 @@ to the correct values for your subscriber endpoint:
     @load NCSA/ZeroMQWriter
     redef LogZeroMQ::endpoint = "tcp://localhost:12345";
 
-After running "broctl deploy", Bro will write all logs to the specified
+After running "Zeekctl deploy", Zeek will write all logs to the specified
 endpoint using ZeroMQ.  Note that all logs will also be written to disk,
-unless you've specifically configured Bro otherwise.
+unless you've specifically configured Zeek otherwise.
 
 If you don't want to send all logs, then you can specify which ones to send.
 For example:
@@ -72,7 +69,7 @@ For example:
     redef LogZeroMQ::endpoint = "tcp://localhost:12345";
     redef LogZeroMQ::send_logs += { HTTP::LOG, Files::LOG };
 
-After running "broctl deploy", Bro will write the "HTTP" and "Files"
+After running "Zeekctl deploy", Zeek will write the "HTTP" and "Files"
 logs to the specified endpoint using ZeroMQ.
 
 Instead of specifying which logs to send via ZeroMQ, one could instead specify
@@ -111,7 +108,7 @@ streams:
     redef LogZeroMQ::endpoint = "tcp://localhost:12345";
     redef LogZeroMQ::send_logs += { HTTP::LOG, DNS::LOG, Files::LOG };
 
-    event bro_init() &priority=-10
+    event Zeek_init() &priority=-10
         {
         local remote_filter_dns: Log::Filter = [
             $name = "remote-zmq",
@@ -131,13 +128,13 @@ streams:
         Log::add_filter(HTTP::LOG, remote_filter_http);
         }
 
-After running "broctl deploy", Bro will write the "HTTP", "DNS", and "Files"
+After running "Zeekctl deploy", Zeek will write the "HTTP", "DNS", and "Files"
 logs to a subscriber on the localhost, and the "HTTP" and "DNS" logs will
 also be written to a subscriber on another host.
 
 Keep in mind that when you add a log filter with the same log path as an
 existing filter (this is applicable to the DNS and HTTP log streams in
-this example), then Bro will append a string of the form "-N", where N is
+this example), then Zeek will append a string of the form "-N", where N is
 an integer, to the end of the log path so that each filter has its own
 unique log path (in the example above, the remote subscriber would see
 log paths of "dns-2" and "http-2").
@@ -147,11 +144,15 @@ How to Avoid Losing Log Messages
 --------------------------------
 
 ZeroMQ will drop messages before a connection to a subscriber has been
-successfully established.  This means if you start Bro before starting
+successfully established.  This means if you start Zeek before starting
 a subscriber, then log records intended to be written via ZeroMQ will be
-dropped until Bro is able to connect to the subscriber.  Therefore, in
+dropped until Zeek is able to connect to the subscriber.  Therefore, in
 order to avoid losing log records, it is important to make
-sure your subscribers are running before attempting to start Bro.
+sure your subscribers are running before attempting to start Zeek.
+
+It is also possible for Zeek to start sending log records while the ZeroMQ connection has not yet been fully established (this is called _slow joiner syndrome_ by ZeroMQ). Their suggested way around this is to add a small delay before sending messages after a connecting. The plugin allows you to set this delay in milliseconds like this (default is 0):
+
+    redef LogZeroMQ::zmq_connect_pause = 500;
 
 Once a connection to a subscriber is established, then if it is interrupted,
 ZeroMQ will queue unsent messages in memory and they will all be sent when the
@@ -162,15 +163,15 @@ can be changed like this:
 
     redef LogZeroMQ::zmq_hwm = 25000;
 
-However, if Bro terminates before an interrupted connection is
+However, if Zeek terminates before an interrupted connection is
 re-established, then all unsent log records are discarded.  In order to
 avoid this, make sure your subscribers are running before issuing
-the BroControl "stop", "restart", or "deploy" commands.  You can specify
-the maximum amount of time that Bro will wait before terminating until all
+the ZeekControl "stop", "restart", or "deploy" commands.  You can specify
+the maximum amount of time that Zeek will wait before terminating until all
 unsent logs are sent by specifying the linger time (specified in milliseconds):
 
     redef LogZeroMQ::zmq_linger = 3000;
 
-In this example, if there are any unsent logs when Bro decides to
-terminate, then Bro will wait up to 3 seconds before giving up and discarding
+In this example, if there are any unsent logs when Zeek decides to
+terminate, then Zeek will wait up to 3 seconds before giving up and discarding
 all remaining unsent logs.

@@ -22,8 +22,8 @@ export {
 
 	## The maximum number of milliseconds to wait for unsent messages to be
 	## sent before discarding them.  This is applicable only when this plugin
-	## attempts to disconnect a socket (which happens only when Bro is
-	## terminating).  A value of -1 means Bro will not terminate until all
+	## attempts to disconnect a socket (which happens only when Zeek is
+	## terminating).  A value of -1 means Zeek will not terminate until all
 	## unsent messages have been sent.
 	const zmq_linger: int = 3000 &redef;
 
