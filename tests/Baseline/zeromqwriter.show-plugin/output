@@ -3,4 +3,5 @@ NCSA::ZeroMQWriter - ZeroMQ log writer (dynamic, version)
     [Constant] LogZeroMQ::endpoint
     [Constant] LogZeroMQ::zmq_hwm
     [Constant] LogZeroMQ::zmq_linger
+    [Constant] LogZeroMQ::zmq_connect_pause
 
