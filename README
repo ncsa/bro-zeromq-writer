@@ -58,7 +58,7 @@ to the correct values for your subscriber endpoint:
     @load NCSA/ZeroMQWriter
     redef LogZeroMQ::endpoint = "tcp://localhost:12345";
 
-After running "Zeekctl deploy", Zeek will write all logs to the specified
+After running "zeekctl deploy", Zeek will write all logs to the specified
 endpoint using ZeroMQ.  Note that all logs will also be written to disk,
 unless you've specifically configured Zeek otherwise.
 
@@ -69,7 +69,7 @@ For example:
     redef LogZeroMQ::endpoint = "tcp://localhost:12345";
     redef LogZeroMQ::send_logs += { HTTP::LOG, Files::LOG };
 
-After running "Zeekctl deploy", Zeek will write the "HTTP" and "Files"
+After running "zeekctl deploy", Zeek will write the "HTTP" and "Files"
 logs to the specified endpoint using ZeroMQ.
 
 Instead of specifying which logs to send via ZeroMQ, one could instead specify
@@ -128,7 +128,7 @@ streams:
         Log::add_filter(HTTP::LOG, remote_filter_http);
         }
 
-After running "Zeekctl deploy", Zeek will write the "HTTP", "DNS", and "Files"
+After running "zeekctl deploy", Zeek will write the "HTTP", "DNS", and "Files"
 logs to a subscriber on the localhost, and the "HTTP" and "DNS" logs will
 also be written to a subscriber on another host.
 
