@@ -49,7 +49,7 @@ In order to enable logging to ZeroMQ, you must ensure that the plugin helper
 script gets loaded and you must specify a subscriber endpoint where logs will
 be sent.
 
-Here is an example that you can add to your local.Zeek (note that if you
+Here is an example that you can add to your local.zeek (note that if you
 installed this plugin with the Zeek package manager and if you're
 using "@load packages" then you must omit the "@load" directive in all
 examples below).  Be sure to change the example hostname and TCP port number
@@ -108,7 +108,7 @@ streams:
     redef LogZeroMQ::endpoint = "tcp://localhost:12345";
     redef LogZeroMQ::send_logs += { HTTP::LOG, DNS::LOG, Files::LOG };
 
-    event Zeek_init() &priority=-10
+    event zeek_init() &priority=-10
         {
         local remote_filter_dns: Log::Filter = [
             $name = "remote-zmq",
@@ -150,7 +150,7 @@ dropped until Zeek is able to connect to the subscriber.  Therefore, in
 order to avoid losing log records, it is important to make
 sure your subscribers are running before attempting to start Zeek.
 
-It is also possible for Zeek to start sending log records while the ZeroMQ connection has not yet been fully established (this is called _slow joiner syndrome_ by ZeroMQ). Their suggested way around this is to add a small delay before sending messages after a connecting. The plugin allows you to set this delay in milliseconds like this (default is 0):
+It is also possible for Zeek to start sending log records while the ZeroMQ connection has not yet been fully established (this is called _slow joiner syndrome_ by ZeroMQ). Their suggested way around this is to add a small delay before sending messages after connecting. The plugin allows you to set this delay in milliseconds like this (default is 0):
 
     redef LogZeroMQ::zmq_connect_pause = 500;
 
