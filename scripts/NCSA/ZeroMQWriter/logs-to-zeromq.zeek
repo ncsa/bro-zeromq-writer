@@ -14,7 +14,7 @@ export {
     const send_logs: set[Log::ID] &redef;
 }
 
-event bro_init() &priority=-5
+event zeek_init() &priority=-5
     {
     if ( endpoint == "" )
         return;

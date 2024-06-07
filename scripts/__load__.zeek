@@ -1,5 +1,5 @@
 #
-# This is loaded unconditionally at Bro startup. Include scripts here that should
+# This is loaded unconditionally at Zeek startup. Include scripts here that should
 # always be loaded.
 #
 # Normally, that will be only code that initializes built-in elements. Load
@@ -7,7 +7,7 @@
 # scripts/<plugin-namespace>/<plugin-name>/__load__.bro instead.
 #
 
-@load ./init.bro
+@load ./init.zeek
 
 
 

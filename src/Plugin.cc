@@ -1,18 +1,18 @@
 #include "Plugin.h"
 #include "ZeroMQ.h"
 
-namespace plugin { namespace NCSA_ZeroMQWriter { Plugin plugin; } }
+namespace zeek::plugin::NCSA_ZeroMQWriter { Plugin plugin; }
 
-using namespace plugin::NCSA_ZeroMQWriter;
+using namespace zeek::plugin::NCSA_ZeroMQWriter;
 
-plugin::Configuration Plugin::Configure()
+zeek::plugin::Configuration Plugin::Configure()
 	{
-	AddComponent(new ::logging::Component("ZeroMQ", ::logging::writer::ZeroMQ::Instantiate));
+	AddComponent(new zeek::logging::Component("ZeroMQ", zeek::logging::writer::ZeroMQ::Instantiate));
 
-	plugin::Configuration config;
+	zeek::plugin::Configuration config;
 	config.name = "NCSA::ZeroMQWriter";
 	config.description = "ZeroMQ log writer";
 	config.version.major = 0;
-	config.version.minor = 2;
+	config.version.minor = 3;
 	return config;
 	}

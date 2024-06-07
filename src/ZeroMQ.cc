@@ -5,11 +5,12 @@
 #include <cstring>
 #include <cstdlib>
 #include <zmq.h>
-
+#include <zeek/Desc.h>
+#include <unistd.h>
 #include "ZeroMQ.h"
 #include "zeromqwriter.bif.h"
 
-using namespace logging;
+using namespace zeek::logging;
 using namespace writer;
 
 // Constructor is called once for each log filter that uses this log writer.
@@ -25,6 +26,9 @@ ZeroMQ::ZeroMQ(WriterFrontend* frontend): WriterBackend(frontend), formatter(nul
 
     // Get user-specified value for ZeroMQ linger time.
     zmq_linger = BifConst::LogZeroMQ::zmq_linger;
+
+    // Get user-specified value for ZeroMQ connect pause
+    zmq_connect_pause = BifConst::LogZeroMQ::zmq_connect_pause;
 
     // Create zmq context
     zmq_context = zmq_ctx_new();
@@ -51,13 +55,13 @@ string ZeroMQ::GetConfigValue(const WriterInfo& info, const string name) const
 // thread.
 bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Field* const* fields)
 {
-    // The Bro log path name.  This would normally be something like "conn",
-    // but if there are multiple log filters with same log path, then Bro
+    // The Zeek log path name.  This would normally be something like "conn",
+    // but if there are multiple log filters with same log path, then Zeek
     // renames the duplicates like "conn-2", "conn-3", etc.
     log_path = info.path;
 
-    // Determine endpoint of subscriber.  Values from the Bro
-    // script "config" table (in Log::Filter) override value of the Bro script
+    // Determine endpoint of subscriber.  Values from the Zeek
+    // script "config" table (in Log::Filter) override value of the Zeek script
     // constant "endpoint".
     string use_endpoint = endpoint;
     string cfg_endpoint = GetConfigValue(info, "endpoint");
@@ -97,6 +101,7 @@ bool ZeroMQ::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
     // Initialize the formatter
     formatter = new threading::formatter::JSON(this, threading::formatter::JSON::TS_EPOCH);
 
+    usleep(zmq_connect_pause * 1000);
     return true;
 }
 
@@ -118,7 +123,7 @@ bool ZeroMQ::DoWrite(int num_fields, const threading::Field* const* fields, thre
 
     const char* msg = (const char*)buffer.Bytes();
 
-    // Send a ZeroMQ multi-part message, where 1st part is just the Bro log
+    // Send a ZeroMQ multi-part message, where 1st part is just the Zeek log
     // path, and 2nd part is the log record in JSON format.
     int nbytes = zmq_send(zmq_publisher, log_path, strlen(log_path), ZMQ_SNDMORE);
     if (nbytes == -1) {
